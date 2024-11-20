@@ -1,13 +1,15 @@
-﻿namespace ApiJWT.Models
+﻿using System;
+using System.Collections.Generic;
+
+namespace ApiJWT.Models;
+
+public partial class Administrator
 {
-    public class Administrator
-    {
-        public int BrosShopAdministratorId { get; set; }
+    public int BrosShopAdministratorId { get; set; }
 
-        public string BrosShopLogin { get; set; } = null!;
+    public string BrosShopLogin { get; set; } = null!;
 
-        public string BrosShopPassword { get; set; } = null!;
+    public string BrosShopPassword { get; set; } = null!;
 
-        public ulong? BrosShopIsAdmin { get; set; }
-    }
+    public ulong? BrosShopIsAdmin { get; set; }
 }

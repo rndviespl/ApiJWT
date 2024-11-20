@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
-using Pomelo.EntityFrameworkCore.MySql.Scaffolding.Internal;
 using ApiJWT.Models;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Pomelo.EntityFrameworkCore.MySql.Scaffolding.Internal;
 
 namespace ApiJWT.Data;
 
@@ -34,6 +35,8 @@ public partial class ApplicationContext : DbContext
     public virtual DbSet<BrosShopReview> BrosShopReviews { get; set; }
 
     public virtual DbSet<BrosShopUser> BrosShopUsers { get; set; }
+
+    public virtual DbSet<EfmigrationsHistory> EfmigrationsHistories { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -126,30 +129,32 @@ public partial class ApplicationContext : DbContext
 
         modelBuilder.Entity<BrosShopOrderComposition>(entity =>
         {
-            entity
-                .HasNoKey()
-                .ToTable("BrosShop_OrderComposition");
+            entity.HasKey(e => e.BrosShopProductId).HasName("PRIMARY");
+
+            entity.ToTable("BrosShop_OrderComposition");
 
             entity.HasIndex(e => e.BrosShopOrderId, "BrosShop_OrderComposition_ibfk_2");
 
             entity.HasIndex(e => new { e.BrosShopProductId, e.BrosShopOrderId }, "BrosShop_ProductId").IsUnique();
 
+            entity.Property(e => e.BrosShopProductId)
+                .ValueGeneratedNever()
+                .HasColumnName("BrosShop_ProductId");
             entity.Property(e => e.BrosShopCost)
                 .HasPrecision(7, 2)
                 .HasColumnName("BrosShop_Cost");
             entity.Property(e => e.BrosShopOrderId).HasColumnName("BrosShop_OrderId");
-            entity.Property(e => e.BrosShopProductId).HasColumnName("BrosShop_ProductId");
             entity.Property(e => e.BrosShopQuantity)
                 .HasDefaultValueSql("'1'")
                 .HasColumnName("BrosShop_Quantity");
 
-            entity.HasOne(d => d.BrosShopOrder).WithMany()
+            entity.HasOne(d => d.BrosShopOrder).WithMany(p => p.BrosShopOrderCompositions)
                 .HasForeignKey(d => d.BrosShopOrderId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("BrosShop_OrderComposition_ibfk_2");
 
-            entity.HasOne(d => d.BrosShopProduct).WithMany()
-                .HasForeignKey(d => d.BrosShopProductId)
+            entity.HasOne(d => d.BrosShopProduct).WithOne(p => p.BrosShopOrderComposition)
+                .HasForeignKey<BrosShopOrderComposition>(d => d.BrosShopProductId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("BrosShop_OrderComposition_ibfk_1");
         });
@@ -176,7 +181,7 @@ public partial class ApplicationContext : DbContext
                 .HasPrecision(7, 2)
                 .HasColumnName("BrosShop_Price");
             entity.Property(e => e.BrosShopPurcharesePrice)
-                .HasPrecision(6, 2)
+                .HasPrecision(7, 2)
                 .HasColumnName("BrosShop_PurcharesePrice");
             entity.Property(e => e.BrosShopTitle)
                 .HasMaxLength(100)
@@ -273,6 +278,16 @@ public partial class ApplicationContext : DbContext
             entity.Property(e => e.BrosShopUsername)
                 .HasMaxLength(50)
                 .HasColumnName("BrosShop_Username");
+        });
+
+        modelBuilder.Entity<EfmigrationsHistory>(entity =>
+        {
+            entity.HasKey(e => e.MigrationId).HasName("PRIMARY");
+
+            entity.ToTable("__EFMigrationsHistory");
+
+            entity.Property(e => e.MigrationId).HasMaxLength(150);
+            entity.Property(e => e.ProductVersion).HasMaxLength(32);
         });
 
         OnModelCreatingPartial(modelBuilder);
